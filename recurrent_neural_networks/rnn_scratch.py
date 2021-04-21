@@ -31,8 +31,8 @@ def rnn_layer(inputs, state, params):
     W_xh, W_hh, b_h, W_hq, b_q = params
     outputs, (H,) = [], state
     for X in inputs:
-        H = torch.tanh(torch.mm(X, W_xh) + torch.mm(H, W_hh) + b_h)
-        Y = torch.mm(H, W_hq) + b_q
+        H = torch.tanh((X @ W_xh) + (H @ W_hh) + b_h)
+        Y = (H @ W_hq) + b_q
         outputs.append(Y)
     return torch.cat(outputs, dim=0), (H,)
 
