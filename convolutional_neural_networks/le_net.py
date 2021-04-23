@@ -19,7 +19,7 @@ if __name__ == '__main__':
 
     batch_size, num_epochs, lr = 256, 10, 0.9
     train_iter, test_iter = tool.load_fashion_mnist(batch_size=batch_size)
-    cnn.train(net, train_iter, test_iter, num_epochs, lr, cnn.try_gpu())
+    cnn.train(net, train_iter, test_iter, num_epochs, lr, tool.try_gpu())
 
 '''
 loss 0.479, train acc 0.818, test acc 0.813

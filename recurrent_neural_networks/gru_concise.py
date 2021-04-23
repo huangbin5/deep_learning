@@ -1,5 +1,5 @@
 from torch import nn
-from _tools import cnn_frame as cnn
+from _tools import mini_tool as tool
 from _tools import rnn_frame as rnn
 
 if __name__ == '__main__':
@@ -9,5 +9,5 @@ if __name__ == '__main__':
     num_inputs, num_hiddens, num_epochs, lr = len(vocab), 256, 500, 1
     gru_layer = nn.GRU(num_inputs, num_hiddens)
     net = rnn.RNNModel(gru_layer, len(vocab))
-    net = net.to(cnn.try_gpu())
-    rnn.train(net, train_iter, vocab, lr, num_epochs, cnn.try_gpu())
+    net = net.to(tool.try_gpu())
+    rnn.train(net, train_iter, vocab, lr, num_epochs, tool.try_gpu())

@@ -1,6 +1,6 @@
 import torch
 from _tools import rnn_frame as rnn
-from _tools import cnn_frame as cnn
+from _tools import mini_tool as tool
 
 
 def get_params(vocab_size, num_hiddens, device):
@@ -42,7 +42,7 @@ if __name__ == '__main__':
     train_iter, vocab = rnn.load_data_time_machine(batch_size, num_steps)
 
     num_hiddens, num_epochs, lr = 512, 500, 1
-    net = rnn.RNNModelScratch(len(vocab), num_hiddens, cnn.try_gpu(), get_params, init_rnn_state, rnn_layer)
+    net = rnn.RNNModelScratch(len(vocab), num_hiddens, tool.try_gpu(), get_params, init_rnn_state, rnn_layer)
     # train(net, train_iter, vocab, lr, num_epochs, cnn.try_gpu())
 
-    rnn.train(net, train_iter, vocab, lr, num_epochs, cnn.try_gpu(), use_random_iter=True)
+    rnn.train(net, train_iter, vocab, lr, num_epochs, tool.try_gpu(), use_random_iter=True)

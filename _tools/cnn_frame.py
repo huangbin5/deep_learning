@@ -6,17 +6,6 @@ from _tools import mlp_frame as mlp
 from _tools import mini_tool as tool
 
 
-def try_gpu(i=0):
-    if torch.cuda.device_count() >= i + 1:
-        return torch.device(f'cuda:{i}')
-    return torch.device('cpu')
-
-
-def try_all_gpus():
-    devices = [torch.device(f'cuda:{i}') for i in range(torch.cuda.device_count())]
-    return devices if devices else [torch.device('cpu')]
-
-
 # 2维×2维 -> 2维
 def corr2d(X, K):
     h, w = K.shape

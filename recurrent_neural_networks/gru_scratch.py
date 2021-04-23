@@ -1,5 +1,5 @@
 import torch
-from _tools import cnn_frame as cnn
+from _tools import mini_tool as tool
 from _tools import rnn_frame as rnn
 
 
@@ -42,5 +42,5 @@ if __name__ == '__main__':
     train_iter, vocab = rnn.load_data_time_machine(batch_size, num_steps)
 
     vocab_size, num_hiddens, num_epochs, lr = len(vocab), 256, 500, 1
-    net = rnn.RNNModelScratch(len(vocab), num_hiddens, cnn.try_gpu(), get_params, init_gru_state, gru)
-    rnn.train(net, train_iter, vocab, lr, num_epochs, cnn.try_gpu())
+    net = rnn.RNNModelScratch(len(vocab), num_hiddens, tool.try_gpu(), get_params, init_gru_state, gru)
+    rnn.train(net, train_iter, vocab, lr, num_epochs, tool.try_gpu())

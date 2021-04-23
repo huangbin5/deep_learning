@@ -61,7 +61,7 @@ if __name__ == '__main__':
         nn.Linear(84, 10))
     lr, num_epochs, batch_size = 1.0, 10, 256
     train_iter, test_iter = tool.load_fashion_mnist(batch_size)
-    cnn.train(net, train_iter, test_iter, num_epochs, lr, cnn.try_gpu())
+    cnn.train(net, train_iter, test_iter, num_epochs, lr, tool.try_gpu())
 
     # 简明实现
     net = nn.Sequential(
@@ -70,4 +70,4 @@ if __name__ == '__main__':
         nn.Flatten(), nn.Linear(256, 120), nn.BatchNorm1d(120),
         nn.Sigmoid(), nn.Linear(120, 84), nn.BatchNorm1d(84),
         nn.Sigmoid(), nn.Linear(84, 10))
-    cnn.train(net, train_iter, test_iter, num_epochs, lr, cnn.try_gpu())
+    cnn.train(net, train_iter, test_iter, num_epochs, lr, tool.try_gpu())

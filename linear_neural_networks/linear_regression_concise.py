@@ -19,8 +19,8 @@ if __name__ == '__main__':
     # 训练
     for epoch in range(num_epochs):
         for X, y in data_iter:
-            loss = mse_loss(model(X), y)
             optimizer.zero_grad()
+            loss = mse_loss(model(X), y)
             loss.backward()
             optimizer.step()
         loss = mse_loss(model(features), labels)

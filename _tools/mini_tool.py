@@ -173,7 +173,7 @@ def set_axes(axes, xlabel, ylabel, xlim, ylim, xscale, yscale, legend):
 
 
 def plot(X, Y=None, xlabel=None, ylabel=None, legend=None, xlim=None, ylim=None, xscale='linear', yscale='linear',
-         fmts=('-', 'm--', 'g-.', 'r:'), figsize=(7, 5), axes=None):
+         fmts=('-', 'm--', 'g-.', 'r:'), figsize=(7, 5), axes=None, show=True):
     plt.figure(figsize=figsize)
     axes = axes if axes else plt.gca()
 
@@ -198,7 +198,8 @@ def plot(X, Y=None, xlabel=None, ylabel=None, legend=None, xlim=None, ylim=None,
         else:
             axes.plot(y, fmt)
     set_axes(axes, xlabel, ylabel, xlim, ylim, xscale, yscale, legend)
-    plt.show()
+    if show:
+        plt.show()
 
 
 def show_images(imgs, num_rows, num_cols, titles=None, scale=1.5):
@@ -215,3 +216,14 @@ def show_images(imgs, num_rows, num_cols, titles=None, scale=1.5):
         ax.set_title(titles[i])
     plt.show()
     return axes
+
+
+def try_gpu(i=0):
+    if torch.cuda.device_count() >= i + 1:
+        return torch.device(f'cuda:{i}')
+    return torch.device('cpu')
+
+
+def try_all_gpus():
+    devices = [torch.device(f'cuda:{i}') for i in range(torch.cuda.device_count())]
+    return devices if devices else [torch.device('cpu')]

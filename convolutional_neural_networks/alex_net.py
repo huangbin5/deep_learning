@@ -24,4 +24,4 @@ if __name__ == '__main__':
 
     batch_size, num_epochs, lr = 128, 10, 0.01
     train_iter, test_iter = tool.load_fashion_mnist(batch_size, resize=224)
-    cnn.train(net, train_iter, test_iter, num_epochs, lr, cnn.try_gpu())
+    cnn.train(net, train_iter, test_iter, num_epochs, lr, tool.try_gpu())
