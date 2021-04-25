@@ -3,7 +3,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 import torch
 from torch.utils import data
-import torchvision
+from torchvision import datasets
 from torchvision import transforms
 import os
 import hashlib
@@ -101,8 +101,8 @@ def load_fashion_mnist(batch_size, resize=None):
     # 将多个transforms组合到一起
     trans = transforms.Compose(trans)
     # 读取数据
-    mnist_train = torchvision.datasets.FashionMNIST(root="../_data", train=True, transform=trans, download=True)
-    mnist_test = torchvision.datasets.FashionMNIST(root="../_data", train=False, transform=trans, download=True)
+    mnist_train = datasets.FashionMNIST(root="../_data", train=True, transform=trans, download=True)
+    mnist_test = datasets.FashionMNIST(root="../_data", train=False, transform=trans, download=True)
     # 返回迭代器，多线程读取
     return (data.DataLoader(mnist_train, batch_size, shuffle=True, num_workers=4),
             data.DataLoader(mnist_test, batch_size, shuffle=False, num_workers=4))
@@ -203,7 +203,7 @@ def plot(X, Y=None, xlabel=None, ylabel=None, legend=None, xlim=None, ylim=None,
 
 
 def show_images(imgs, num_rows, num_cols, titles=None, scale=1.5):
-    figsize = (num_cols * scale, (num_rows + 1) * scale)
+    figsize = (num_cols * scale, num_rows * scale)
     _, axes = plt.subplots(num_rows, num_cols, figsize=figsize)
     axes = axes.flatten()
     for i, (ax, img) in enumerate(zip(axes, imgs)):
@@ -213,7 +213,8 @@ def show_images(imgs, num_rows, num_cols, titles=None, scale=1.5):
             ax.imshow(img)
         ax.axes.get_xaxis().set_visible(False)
         ax.axes.get_yaxis().set_visible(False)
-        ax.set_title(titles[i])
+        if titles:
+            ax.set_title(titles[i])
     plt.show()
     return axes
 
