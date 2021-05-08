@@ -202,7 +202,7 @@ def plot(X, Y=None, xlabel=None, ylabel=None, legend=None, xlim=None, ylim=None,
         plt.show()
 
 
-def show_images(imgs, num_rows, num_cols, titles=None, scale=1.5):
+def show_images(imgs, num_rows, num_cols, titles=None, scale=1.5, show=True):
     figsize = (num_cols * scale, num_rows * scale)
     _, axes = plt.subplots(num_rows, num_cols, figsize=figsize)
     axes = axes.flatten()
@@ -215,7 +215,8 @@ def show_images(imgs, num_rows, num_cols, titles=None, scale=1.5):
         ax.axes.get_yaxis().set_visible(False)
         if titles:
             ax.set_title(titles[i])
-    plt.show()
+    if show:
+        plt.show()
     return axes
 
 
