@@ -1,3 +1,4 @@
+import torch
 from torch import nn
 from _tools import mini_tool as tool
 from _tools import cnn_frame as cnn
@@ -23,7 +24,6 @@ if __name__ == '__main__':
     b5 = nn.Sequential(*resnet_module(256, 512, 2))
     net = nn.Sequential(b1, b2, b3, b4, b5, nn.AdaptiveAvgPool2d((1, 1)), nn.Flatten(), nn.Linear(512, 10))
 
-    import torch
     print(net)
     X = torch.rand(size=(1, 1, 224, 224))
     for layer in net:
