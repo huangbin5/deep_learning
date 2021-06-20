@@ -163,7 +163,7 @@ if __name__ == '__main__':
     bbox_loss = nn.L1Loss(reduction='none')
     optimizer = torch.optim.SGD(net.parameters(), lr=0.2, weight_decay=5e-4)
 
-    # train(net)
+    train(net)
     X = io.read_image('../_data/img/banana.jpg').unsqueeze(0).float()
     output = predict(X)
     img = X.squeeze(0).permute(1, 2, 0).long()

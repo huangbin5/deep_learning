@@ -3,7 +3,7 @@ from torch import nn
 from torch.nn import functional as F
 from matplotlib import pyplot as plt
 from _tools import mini_tool as tool
-from _tools import attention as at
+from _tools import att_frame as att
 
 
 def f(x):
@@ -30,8 +30,8 @@ def nonparametric_attention_pooling():
     # y_hat是values的加权平均值
     y_hat = torch.matmul(attention_weights, y_train)
     plot_kernel_reg(y_hat)
-    at.show_heatmaps(attention_weights.unsqueeze(0).unsqueeze(0), xlabel='Sorted training inputs',
-                     ylabel='Sorted testing inputs')
+    att.show_heatmaps(attention_weights.unsqueeze(0).unsqueeze(0), xlabel='Sorted training inputs',
+                      ylabel='Sorted testing inputs')
 
 
 class NWKernelRegression(nn.Module):
@@ -72,8 +72,8 @@ def parametric_attention_pooling():
     values = y_train.repeat((n_test, 1))
     y_hat = net(x_test, keys, values).unsqueeze(1).detach()
     plot_kernel_reg(y_hat)
-    at.show_heatmaps(net.attention_weights.unsqueeze(0).unsqueeze(0), xlabel='Sorted training inputs',
-                     ylabel='Sorted testing inputs')
+    att.show_heatmaps(net.attention_weights.unsqueeze(0).unsqueeze(0), xlabel='Sorted training inputs',
+                      ylabel='Sorted testing inputs')
 
 
 if __name__ == '__main__':

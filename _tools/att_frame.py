@@ -68,14 +68,16 @@ class Seq2SeqDecoder(Decoder):
         return enc_outputs[1]
 
     def forward(self, X, state):
+        # X.shape = (batch_size, num_steps, embed_size)
         X = self.embedding(X).permute(1, 0, 2)
-        # context第一维大小和X一样
+        # 扩展context第一维大小为num_steps
         context = state[-1].repeat(X.shape[0], 1, 1)
         # 将X和context拼接起来
         X_and_context = torch.cat((X, context), 2)
         output, state = self.rnn(X_and_context, state)
         output = self.dense(output).permute(1, 0, 2)
         # output.shape = (batch_size, num_steps, vocab_size)
+        # state.shape = (num_layers, batch_size, num_hiddens)
         return output, state
 
 

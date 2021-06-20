@@ -7,6 +7,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 
 
+# todo 未整理代码
 def _generate_segments(img, scale, sigma, min_size):
     """ 区域分割 """
     # segment_mask.shape = (height, width)：分割后所在的的区域编号

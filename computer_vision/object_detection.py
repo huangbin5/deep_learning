@@ -1,8 +1,6 @@
 import torch
 from matplotlib import pyplot as plt
 from _tools import cv_frame as cv
-from _tools import mini_tool as tool
-from d2l import torch as d2l
 
 img = plt.imread('../_data/img/catdog.jpg')
 torch.set_printoptions(2)

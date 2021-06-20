@@ -26,8 +26,8 @@ def init_rnn_state(batch_size, num_hiddens, device):
 
 
 def rnn_layer(inputs, state, params):
-    """inputs.shape = (time_step, batch_size, vocab_size)
-       outputs.shape = (time_step * batch_size, vocab_size)"""
+    """inputs.shape = (num_steps, batch_size, vocab_size)
+       outputs.shape = (num_steps * batch_size, vocab_size)"""
     W_xh, W_hh, b_h, W_hq, b_q = params
     outputs, (H,) = [], state
     for X in inputs:
