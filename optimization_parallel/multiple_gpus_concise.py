@@ -36,3 +36,4 @@ def train(net, num_gpus, batch_size, lr):
 
 if __name__ == '__main__':
     net, devices = cnn.resnet18(10), tool.try_all_gpus()
+    train(net, num_gpus=1, batch_size=256, lr=0.1)
