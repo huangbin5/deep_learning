@@ -76,7 +76,7 @@ def train_and_pred(train_features, train_labels, test_features, test_data, num_e
     # 将其重新格式化以导出到Kaggle
     test_data['SalePrice'] = pd.Series(preds.reshape(-1))
     submission = pd.concat([test_data['Id'], test_data['SalePrice']], axis=1)
-    submission.to_csv('../_data/submission.csv', index=False)
+    submission.to_csv('../_data/house_prices.csv', index=False)
 
 
 if __name__ == '__main__':

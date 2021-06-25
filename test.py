@@ -1,10 +1,9 @@
 import numpy as np
-import imageio
-import cv2
-from PIL import Image
 import torch
+from torch import nn
+from torchvision import io
 
-model = torch.hub.load('ultralytics/yolov3', 'yolov3')
-img = '1.jpg'
-result = model(img)
-result.save()
+a = torch.tensor([[1, 2, 3], [4, 5, 6]])
+b = torch.tensor([[1], [2]])
+cross_entropy = nn.BCEWithLogitsLoss(reduction='sum')
+print(cross_entropy(a, b))

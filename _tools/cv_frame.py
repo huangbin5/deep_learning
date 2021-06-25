@@ -3,6 +3,7 @@ from torch import nn
 from torch.utils import data
 from torchvision import datasets
 from torchvision import io
+from torchvision import transforms
 from matplotlib import pyplot as plt
 import os
 import pandas as pd
@@ -10,33 +11,15 @@ from _tools.constant import *
 from _tools import mini_tool as tool
 from _tools import mlp_frame as mlp
 from _tools import cnn_frame as cnn
+import collections
+import shutil
+import math
 
 
 def load_cifar10(is_train, augs, batch_size):
     dataset = datasets.CIFAR10(root="../_data", train=is_train, transform=augs, download=True)
     dataloader = data.DataLoader(dataset, batch_size=batch_size, shuffle=is_train, num_workers=4)
     return dataloader
-
-
-def resnet18(num_classes, in_channels=1):
-    def resnet_block(in_channels, out_channels, num_residuals, first_block=False):
-        blk = []
-        for i in range(num_residuals):
-            if i == 0 and not first_block:
-                blk.append(cnn.Residual(in_channels, out_channels, use_1x1conv=True, strides=2))
-            else:
-                blk.append(cnn.Residual(out_channels, out_channels))
-        return nn.Sequential(*blk)
-
-    # 使用更小的卷积核，移除了max pooling层
-    net = nn.Sequential(nn.Conv2d(in_channels, 64, kernel_size=3, stride=1, padding=1), nn.BatchNorm2d(64), nn.ReLU())
-    net.add_module("resnet_block1", resnet_block(64, 64, 2, first_block=True))
-    net.add_module("resnet_block2", resnet_block(64, 128, 2))
-    net.add_module("resnet_block3", resnet_block(128, 256, 2))
-    net.add_module("resnet_block4", resnet_block(256, 512, 2))
-    net.add_module("global_avg_pool", nn.AdaptiveAvgPool2d((1, 1)))
-    net.add_module("fc", nn.Sequential(nn.Flatten(), nn.Linear(512, num_classes)))
-    return net
 
 
 def train_batch(net, X, y, cross_entropy, optimizer, devices):
@@ -316,3 +299,146 @@ def load_data_bananas(batch_size):
     train_iter = data.DataLoader(BananasDataset(is_train=True), batch_size, shuffle=True)
     val_iter = data.DataLoader(BananasDataset(is_train=False), batch_size)
     return train_iter, val_iter
+
+
+def read_voc_images(is_train=True):
+    DATA_HUB['voc2012'] = (DATA_URL + 'VOCtrainval_11-May-2012.tar', '4e443f8a2eca6b1dac8a6c57641b67dd40621a49')
+    voc_dir = tool.download_extract('voc2012', 'VOCdevkit/VOC2012')
+    txt_fname = os.path.join(voc_dir, 'ImageSets', 'Segmentation', 'train.txt' if is_train else 'val.txt')
+    mode = io.image.ImageReadMode.RGB
+    with open(txt_fname, 'r') as f:
+        img_names = f.read().split()
+    features, labels = [], []
+    for i, fname in enumerate(img_names):
+        features.append(io.read_image(os.path.join(voc_dir, 'JPEGImages', f'{fname}.jpg')))
+        labels.append(io.read_image(os.path.join(voc_dir, 'SegmentationClass', f'{fname}.png'), mode))
+    return features, labels
+
+
+def voc_colormap2label():
+    colormap2label = torch.zeros(256 ** 3, dtype=torch.long)
+    for i, colormap in enumerate(VOC_COLORMAP):
+        colormap2label[(colormap[0] * 256 + colormap[1]) * 256 + colormap[2]] = i
+    return colormap2label
+
+
+def voc_label_indices(colormap, colormap2label):
+    colormap = colormap.permute(1, 2, 0).numpy().astype('int32')
+    idx = ((colormap[:, :, 0] * 256 + colormap[:, :, 1]) * 256 + colormap[:, :, 2])
+    return colormap2label[idx]
+
+
+def voc_rand_crop(feature, label, height, width):
+    rect = transforms.RandomCrop.get_params(feature, (height, width))
+    feature = transforms.F.crop(feature, *rect)
+    label = transforms.F.crop(label, *rect)
+    return feature, label
+
+
+class VOCSegDataset(data.Dataset):
+    def __init__(self, is_train, crop_size):
+        self.transform = transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+        self.crop_size = crop_size
+        features, labels = read_voc_images(is_train)
+        self.features = [self.normalize_image(feature) for feature in self.filter(features)]
+        self.labels = self.filter(labels)
+        self.colormap2label = voc_colormap2label()
+        print('read ' + str(len(self.features)) + ' examples')
+
+    def normalize_image(self, img):
+        return self.transform(img.float())
+
+    def filter(self, imgs):
+        return [img for img in imgs if (img.shape[1] >= self.crop_size[0] and img.shape[2] >= self.crop_size[1])]
+
+    def __getitem__(self, idx):
+        feature, label = voc_rand_crop(self.features[idx], self.labels[idx], *self.crop_size)
+        return feature, voc_label_indices(label, self.colormap2label)
+
+    def __len__(self):
+        return len(self.features)
+
+
+def load_data_voc(batch_size, crop_size):
+    # drop_last：丢弃除以batch_size时余下的数据
+    train_iter = data.DataLoader(VOCSegDataset(True, crop_size), batch_size, shuffle=True, drop_last=True,
+                                 num_workers=4)
+    test_iter = data.DataLoader(VOCSegDataset(False, crop_size), batch_size, drop_last=True, num_workers=4)
+    return train_iter, test_iter
+
+
+def read_csv_labels(fname):
+    with open(fname, 'r') as f:
+        lines = f.readlines()[1:]
+    tokens = [l.rstrip().split(',') for l in lines]
+    return dict(tokens)
+
+
+def copyfile(filename, target_dir):
+    os.makedirs(target_dir, exist_ok=True)
+    shutil.copy(filename, target_dir)
+
+
+def reorg_train_valid(data_dir, labels, valid_ratio):
+    # 样本最少类别的样本数
+    n = collections.Counter(labels.values()).most_common()[-1][1]
+    n_valid_per_label = max(1, math.floor(n * valid_ratio))
+    label_count = {}
+    for train_file in os.listdir(os.path.join(data_dir, 'train')):
+        label = labels[train_file.split('.')[0]]
+        fname = os.path.join(data_dir, 'train', train_file)
+        copyfile(fname, os.path.join(data_dir, 'train_valid_test', 'train_valid', label))
+        if label not in label_count or label_count[label] < n_valid_per_label:
+            copyfile(fname, os.path.join(data_dir, 'train_valid_test', 'valid', label))
+            label_count[label] = label_count.get(label, 0) + 1
+        else:
+            copyfile(fname, os.path.join(data_dir, 'train_valid_test', 'train', label))
+    return n_valid_per_label
+
+
+def reorg_test(data_dir):
+    for test_file in os.listdir(os.path.join(data_dir, 'test')):
+        copyfile(os.path.join(data_dir, 'test', test_file),
+                 os.path.join(data_dir, 'train_valid_test', 'test', 'unknown'))
+
+
+def reorg_cifar10_data(data_dir, valid_ratio):
+    labels = read_csv_labels(os.path.join(data_dir, 'trainLabels.csv'))
+    reorg_train_valid(data_dir, labels, valid_ratio)
+    reorg_test(data_dir)
+
+
+def reorg_dog_data(data_dir, valid_ratio):
+    labels = read_csv_labels(os.path.join(data_dir, 'labels.csv'))
+    reorg_train_valid(data_dir, labels, valid_ratio)
+    reorg_test(data_dir)
+
+
+def update_D(X, Z, net_D, net_G, cross_entropy, optimizer_D):
+    batch_size = X.shape[0]
+    ones = torch.ones((batch_size,), device=X.device)
+    zeros = torch.zeros((batch_size,), device=X.device)
+    optimizer_D.zero_grad()
+    real_Y = net_D(X)
+    fake_X = net_G(Z)
+    # 更新net_D的时候不需要更新net_G
+    fake_Y = net_D(fake_X.detach())
+    loss_D = (cross_entropy(real_Y, ones.reshape(real_Y.shape)) +
+              cross_entropy(fake_Y, zeros.reshape(fake_Y.shape))) / 2
+    loss_D.backward()
+    optimizer_D.step()
+    return loss_D
+
+
+def update_G(Z, net_D, net_G, cross_entropy, optimizer_G):
+    batch_size = Z.shape[0]
+    ones = torch.ones((batch_size,), device=Z.device)
+    optimizer_G.zero_grad()
+    # fake_X可以直接使用update_D中计算的结果
+    fake_X = net_G(Z)
+    # fake_Y就要重新计算了，因为net_D已经更新过了
+    fake_Y = net_D(fake_X)
+    loss_G = cross_entropy(fake_Y, ones.reshape(fake_Y.shape))
+    loss_G.backward()
+    optimizer_G.step()
+    return loss_G

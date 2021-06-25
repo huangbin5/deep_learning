@@ -5,6 +5,7 @@ from PIL import Image
 from matplotlib import pyplot as plt
 from _tools import mini_tool as tool
 from _tools import cv_frame as cv
+from _tools import cnn_frame as cnn
 
 
 def apply(img, aug, num_rows=2, num_cols=4, scale=2):
@@ -53,9 +54,10 @@ def train_with_data_aug(train_augs, test_augs, net, lr=0.001):
 if __name__ == '__main__':
     # augment_test()
 
-    train_augs = transforms.Compose([transforms.RandomHorizontalFlip(), transforms.ToTensor()])
+    train_augs = transforms.Compose([transforms.RandomHorizontalFlip(),
+                                     transforms.ToTensor()])
     test_augs = transforms.Compose([transforms.ToTensor()])
 
-    net, batch_size = cv.resnet18(10, 3), 256
+    net, batch_size = cnn.resnet18(10, 3), 256
     net.apply(init_weights)
     train_with_data_aug(train_augs, test_augs, net)

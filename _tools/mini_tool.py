@@ -2,6 +2,7 @@ import time
 import numpy as np
 from matplotlib import pyplot as plt
 import torch
+from torch import nn
 from torch.utils import data
 from torchvision import datasets
 from torchvision import transforms
@@ -202,6 +203,10 @@ def plot(X, Y=None, xlabel=None, ylabel=None, legend=None, xlim=None, ylim=None,
         plt.show()
 
 
+def annotate(text, xy, xytext):
+    plt.gca().annotate(text, xy=xy, xytext=xytext, arrowprops=dict(arrowstyle='->'))
+
+
 def show_images(imgs, num_rows, num_cols, titles=None, scale=1.5, show=True):
     figsize = (num_cols * scale, num_rows * scale)
     _, axes = plt.subplots(num_rows, num_cols, figsize=figsize)
@@ -229,3 +234,21 @@ def try_gpu(i=0):
 def try_all_gpus():
     devices = [torch.device(f'cuda:{i}') for i in range(torch.cuda.device_count())]
     return devices if devices else [torch.device('cpu')]
+
+
+class Benchmark:
+    def __init__(self, description='Done'):
+        self.description = description
+
+    def __enter__(self):
+        self.timer = Timer()
+        return self
+
+    def __exit__(self, *args):
+        print(f'{self.description}: {self.timer.stop():.4f} sec')
+
+
+def split_batch(X, y, devices):
+    assert X.shape[0] == y.shape[0]
+    # 将数据均匀地分布到多个设备上
+    return nn.parallel.scatter(X, devices), nn.parallel.scatter(y, devices)
