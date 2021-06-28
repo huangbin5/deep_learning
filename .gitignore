@@ -1,0 +1,6 @@
+/.idea
+/_data/
+/_leetcode
+/_test
+/_tools/__pycache__/
+/test.py
